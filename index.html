@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archivos Digitales</title>
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/marcianito.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<!--Título (Archivos Digitales) * (obligatorios) (Front end). 
+❖ Nombre Completo del alumno 
+❖ Inicio de sesión para su aplicación web 
+❖ Apartado para subir y visualizar los documentos (INE, CURP, ACTA DE NACIMIENTO, CURSOS, CV, TÍTULOS, CEDULAS PROFESIONALES, RECIBOS DE LUZ Y TÉLEFONO). 
+❖ Menú Principal 
+❖ Barra lateral, para visualizar las carpetas: Documentos Privados, Cursos de Actualización, Documentos Académicos y Documentos Familiares. 
+❖ Contará con un buscador de archivos. 
+❖ Botones para eliminar, editar y guardar-->
+
+<body>
+
+    <!-- ==================== PANTALLA DE INICIO DE SESIÓN ==================== -->
+    <div id="auth-container" class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+        <div class="card card-subtle theme-inverse border-0 auth-card p-4" style="max-width: 420px; width: 100%;">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <span class="badge bg-pastel-primary text-dark px-3 py-2 mb-2 rounded-pill">UTIM • 4° "A" DSM</span>
+                    <h2 class="fw-bold mb-1">Archivos Digitales</h2>
+                    <p class="text-muted small mb-0">Alumna: <strong>Marely Aquino Flores</strong></p>
+                </div>
+
+                <!-- Alertas de sesión -->
+                <div id="auth-alert" class="alert d-none" role="alert"></div>
+
+                <form id="login-form">
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">Correo electrónico</label>
+                        <input type="email" class="form-control" id="email" placeholder="ejemplo@utim.edu.mx" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-semibold">Contraseña</label>
+                        <input type="password" class="form-control" id="password" placeholder="Mínimo 6 caracteres" required minlength="6">
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" id="btn-login" class="btn-outline theme-success">Iniciar Sesión</button>
+                        <button type="button" id="btn-register" class="btn-outline theme-accent">Crear cuenta</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== APLICACIÓN PRINCIPAL (PROTEGIDA) ==================== -->
+    <div id="app-container" class="d-none">
+        <!-- Menú Principal (Navbar) -->
+        <nav class="navbar navbar-light bg-white border-bottom shadow-sm sticky-top px-3" style="min-height: 58px;">
+            <div class="container-fluid d-flex align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="btn-toggle-menu" class="btn btn-outline-secondary btn-sm px-2 py-1" aria-label="Abrir o cerrar menú lateral" title="Menú">
+                        ☰
+                    </button>
+                    <a class="navbar-brand fw-bold d-flex align-items-center gap-2 mb-0" href="#">
+                        <span class="brand-dot"></span>
+                        Archivos Digitales
+                    </a>
+                    <span class="d-none d-md-inline text-muted small ms-2">
+                        Alumna: <strong class="text-dark">Marely Aquino Flores</strong>
+                    </span>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span id="user-email-badge" class="badge bg-light text-dark border py-2 px-3 d-none d-sm-inline-flex"></span>
+                    <button type="button" id="btn-logout" class="btn btn-outline-danger btn-sm fw-semibold">Cerrar Sesión</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Fondo oscuro en móvil al abrir menú lateral -->
+        <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+        <div class="app-shell">
+            <!-- Barra Lateral Compacta: Carpetas -->
+            <aside id="sidebar-menu" class="sidebar-panel" aria-label="Carpetas de archivos">
+                <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+                    <span class="text-uppercase text-muted fw-bold small">Carpetas</span>
+                    <button type="button" id="btn-close-sidebar" class="btn-close d-md-none" aria-label="Cerrar menú"></button>
+                </div>
+
+                <div class="list-group list-group-flush gap-1" id="folder-list">
+                    <button type="button" class="list-group-item list-group-item-action rounded folder-btn active" data-folder="Todas">
+                        <span>📂</span> <span>Todos los archivos</span>
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action rounded folder-btn" data-folder="Documentos Privados">
+                        <span>🔒</span> <span>Documentos Privados</span>
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action rounded folder-btn" data-folder="Cursos de Actualización">
+                        <span>🎓</span> <span>Cursos de Actualización</span>
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action rounded folder-btn" data-folder="Documentos Académicos">
+                        <span>📚</span> <span>Documentos Académicos</span>
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action rounded folder-btn" data-folder="Documentos Familiares">
+                        <span>🏠</span> <span>Documentos Familiares</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Contenido Principal -->
+            <main class="main-panel">
+                <div class="d-md-none mb-2 small text-muted">
+                    Alumna: <strong class="text-dark">Marely Aquino Flores</strong>
+                </div>
+
+                <!-- Encabezado, Buscador y Botón Subir -->
+                <div class="row g-3 align-items-center mb-4">
+                    <div class="col-md-5">
+                        <h4 class="fw-bold mb-0" id="current-folder-title">Todos los archivos</h4>
+                        <small class="text-muted">Gestiona, visualiza y organiza tus documentos oficiales</small>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="search" id="search-input" class="form-control" placeholder="🔍 Buscar por nombre, tipo o carpeta...">
+                    </div>
+                    <div class="col-md-3 text-md-end">
+                        <button type="button" class="btn btn-custom-primary w-100 fw-semibold" id="btn-open-new">
+                            + Subir Documento
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Alertas de operaciones CRUD -->
+                <div id="app-alert" class="alert d-none" role="alert"></div>
+
+                <!-- Contenedor de Tarjetas de Documentos -->
+                <div id="documents-grid" class="row g-3">
+                    <!-- Se llena dinámicamente desde js/marcianito.js -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: SUBIR / EDITAR DOCUMENTO ==================== -->
+    <div class="modal fade" id="docModal" tabindex="-1" aria-labelledby="docModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-pastel-primary">
+                    <h5 class="modal-title fw-bold" id="docModalLabel">Subir Nuevo Documento</h5>
+                    <button type="button" class="btn-close" id="btn-close-doc-modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="doc-form">
+                    <div class="modal-body">
+                        <input type="hidden" id="doc-id">
+                        <input type="hidden" id="doc-old-path">
+                        <input type="hidden" id="doc-old-mime">
+
+                        <div class="mb-3">
+                            <label for="doc-titulo" class="form-label fw-semibold">Título / Descripción del archivo</label>
+                            <input type="text" class="form-control" id="doc-titulo" placeholder="Ej. INE Actualizada 2026" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="doc-tipo" class="form-label fw-semibold">Tipo de Documento</label>
+                            <select class="form-select" id="doc-tipo" required>
+                                <option value="" selected disabled>Selecciona una opción...</option>
+                                <option value="INE">INE</option>
+                                <option value="CURP">CURP</option>
+                                <option value="ACTA DE NACIMIENTO">ACTA DE NACIMIENTO</option>
+                                <option value="CURSOS">CURSOS</option>
+                                <option value="CV">CV</option>
+                                <option value="TÍTULOS">TÍTULOS</option>
+                                <option value="CEDULAS PROFESIONALES">CEDULAS PROFESIONALES</option>
+                                <option value="RECIBOS DE LUZ">RECIBOS DE LUZ</option>
+                                <option value="RECIBOS DE TÉLEFONO">RECIBOS DE TÉLEFONO</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="doc-carpeta" class="form-label fw-semibold">Carpeta Destino</label>
+                            <select class="form-select" id="doc-carpeta" required>
+                                <option value="Documentos Privados">Documentos Privados</option>
+                                <option value="Cursos de Actualización">Cursos de Actualización</option>
+                                <option value="Documentos Académicos">Documentos Académicos</option>
+                                <option value="Documentos Familiares">Documentos Familiares</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="doc-file" class="form-label fw-semibold">Archivo (PDF, Imagen JPG/PNG/WEBP)</label>
+                            <input type="file" class="form-control" id="doc-file" accept=".pdf,.png,.jpg,.jpeg,.webp">
+                            <div class="form-text" id="file-help-text">Obligatorio al subir un registro nuevo. Al editar, déjalo vacío si conservas el archivo actual.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" id="btn-cancel-doc-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-custom-primary fw-semibold" id="btn-save-doc">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: VISUALIZADOR DE DOCUMENTOS ==================== -->
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="preview-title">Vista Previa</h5>
+                    <button type="button" class="btn-close" id="btn-close-preview-modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body text-center p-0 bg-dark d-flex align-items-center justify-content-center" style="min-height: 65vh;" id="preview-body">
+                    <!-- Aquí se inyecta la imagen o el iframe del PDF -->
+                </div>
+                <div class="modal-footer">
+                    <a id="preview-download" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Abrir en pestaña nueva / Descargar</a>
+                    <button type="button" class="btn btn-secondary" id="btn-close-preview-footer">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Local (si existe) -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <!-- Lógica de la aplicación y Supabase -->
+    <script src="js/marcianito.js"></script>
+</body>
+</html>
